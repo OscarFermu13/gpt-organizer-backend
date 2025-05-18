@@ -120,9 +120,67 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  password: 'password',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ChatScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  content: 'content',
+  favorite: 'favorite',
+  archived: 'archived',
+  createdAt: 'createdAt',
+  folderId: 'folderId',
+  notes: 'notes'
+};
+
+exports.Prisma.FolderScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  color: 'color',
+  parentId: 'parentId'
+};
+
+exports.Prisma.TagScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  userId: 'userId'
+};
+
+exports.Prisma.ChatTagScalarFieldEnum = {
+  id: 'id',
+  chatId: 'chatId',
+  tagId: 'tagId'
+};
+
+exports.Prisma.SortOrder = {
+  asc: 'asc',
+  desc: 'desc'
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+};
+
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+
 
 exports.Prisma.ModelName = {
-
+  User: 'User',
+  Chat: 'Chat',
+  Folder: 'Folder',
+  Tag: 'Tag',
+  ChatTag: 'ChatTag'
 };
 
 /**

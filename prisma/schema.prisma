@@ -6,10 +6,64 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  chats     Chat[]
+  folders   Folder[]
+  tags      Tag[]
+  createdAt DateTime @default(now())
+}
+
+model Chat {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  title     String?
+  content   String    @db.Text
+  favorite  Boolean   @default(false)
+  archived  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  folder    Folder?   @relation(fields: [folderId], references: [id])
+  folderId  String?
+  tags      ChatTag[]
+  notes     String? // Para futuras anotaciones
+}
+
+model Folder {
+  id       String   @id @default(cuid())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String
+  name     String
+  color     String?
+  parent   Folder?  @relation("Subfolders", fields: [parentId], references: [id])
+  parentId String?
+  children Folder[] @relation("Subfolders")
+  chats    Chat[]
+}
+
+model Tag {
+  id     String    @id @default(cuid())
+  name   String
+  user   User      @relation(fields: [userId], references: [id])
+  userId String
+  chats  ChatTag[]
+}
+
+model ChatTag {
+  id     String @id @default(cuid())
+  chat   Chat   @relation(fields: [chatId], references: [id])
+  chatId String
+  tag    Tag    @relation(fields: [tagId], references: [id])
+  tagId  String
+
+  @@unique([chatId, tagId]) // evita duplicados
 }
