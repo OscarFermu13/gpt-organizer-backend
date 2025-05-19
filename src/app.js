@@ -17,4 +17,7 @@ app.get('/', (req, res) => {
 const authRoutes = require('./routes/auth.route')
 app.use('/auth', authRoutes)
 
+const tagRoutes = require('./routes/tag.route')
+app.use('/tags', tagRoutes)
+
 module.exports = app

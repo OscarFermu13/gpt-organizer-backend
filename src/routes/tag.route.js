@@ -1,5 +1,7 @@
 const express = require('express')
 const router = express.Router()
+const auth = require('../middleware/authMiddleware')
+
 const {
   getTags,
   createTag,
@@ -8,9 +10,9 @@ const {
 } = require('../controllers/tag.controller')
 
 // CRUD endpoints
-router.get('/', getTags)
-router.post('/', createTag)
-router.put('/:id', updateTag)
-router.delete('/:id', deleteTag)
+router.get('/', auth, getTags)
+router.post('/', auth, createTag)
+router.put('/:id', auth, updateTag)
+router.delete('/:id', auth, deleteTag)
 
 module.exports = router
