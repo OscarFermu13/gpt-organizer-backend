@@ -60,9 +60,8 @@ async function deleteTag(req, res) {
 
     try {
         const tag = await prisma.tag.findUnique({ where: { id } })
-        if (!tag || tag.userId !== userId) {
-            return res.status(403).json({ error: 'Unauthorized' })
-        }
+
+        if (!tag || tag.userId !== userId) return res.status(403).json({ error: 'Unauthorized' })
 
         await prisma.tag.delete({ where: { id } })
         res.json({ message: 'Tag deleted' })

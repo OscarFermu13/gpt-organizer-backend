@@ -20,4 +20,10 @@ app.use('/auth', authRoutes)
 const tagRoutes = require('./routes/tag.route')
 app.use('/tags', tagRoutes)
 
+const chatRoutes = require('./routes/chat.route')
+app.use('/chats', chatRoutes)
+
+const folderRoutes = require('./routes/folder.route')
+app.use('/folders', folderRoutes)
+
 module.exports = app
