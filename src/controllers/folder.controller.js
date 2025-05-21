@@ -7,7 +7,8 @@ async function getFolders(req, res) {
         const folders = await prisma.folder.findMany({
             where: { userId },
             include: {
-                children: true, // subcarpetas
+                children: true,
+                chats: true,
             },
         })
         res.json(folders)
