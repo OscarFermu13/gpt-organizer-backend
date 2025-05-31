@@ -19,7 +19,7 @@ async function getChats(req, res) {
 }
 
 async function createChat(req, res) {
-    const { chatId, favorite, archived, folderId, tagIds = [] } = req.body
+    const { chatId, title, favorite, archived, folderId, tagIds = [] } = req.body
     const userId = req.user.userId
 
     try {
@@ -27,6 +27,7 @@ async function createChat(req, res) {
             data: {
                 userId,
                 chatId,
+                title,
                 favorite,
                 archived,
                 folderId,
