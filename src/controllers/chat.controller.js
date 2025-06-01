@@ -46,6 +46,27 @@ async function createChat(req, res) {
     }
 }
 
+async function updateChat(req, res) {
+    const { id } = req.params
+    const { title } = req.body
+    const userId = req.user.userId
+
+    try {
+        const chat = await prisma.chat.findUnique({ where: { id } })
+        if (!chat || chat.userId !== userId) return res.status(403).json({ error: 'Unauthorized' })
+
+        const updated = await prisma.chat.update({
+            where: { id },
+            data: { title },
+        })
+        res.json(updated)
+    } catch (error) {
+        console.error('Error updating chat:', error)
+        res.status(500).json({ error: 'Error updating chat' })
+    }
+
+}
+
 async function deleteChat(req, res) {
     const { id } = req.params
     const userId = req.user.userId
@@ -65,5 +86,6 @@ async function deleteChat(req, res) {
 module.exports = {
     getChats,
     createChat,
+    updateChat,
     deleteChat,
 }
