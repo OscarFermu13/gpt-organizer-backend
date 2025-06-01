@@ -48,7 +48,7 @@ async function createChat(req, res) {
 
 async function updateChat(req, res) {
     const { id } = req.params
-    const { title } = req.body
+    const { title, folderId } = req.body
     const userId = req.user.userId
 
     try {
@@ -57,7 +57,7 @@ async function updateChat(req, res) {
 
         const updated = await prisma.chat.update({
             where: { id },
-            data: { title },
+            data: { title, folderId },
         })
         res.json(updated)
     } catch (error) {
