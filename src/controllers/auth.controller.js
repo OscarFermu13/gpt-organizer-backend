@@ -6,8 +6,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 
 const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
+      secure: true,
+      sameSite: 'None',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días
     };
 
@@ -70,16 +70,17 @@ async function login(req, res) {
 async function logout(req, res) {
   res.clearCookie('token', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'None',
   })
   res.status(200).json({ message: 'Logged out successfully' })
 }
 
 async function validateUser(req, res, next) {
   const token = req.cookies.token;
+  
   if (!token) {
-    return res.status(401).json({ error: 'Unauthorized' })
+    return res.status(401).json({ error: 'No token' })
   }
 
   try {
