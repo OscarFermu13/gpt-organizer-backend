@@ -7,7 +7,10 @@ dotenv.config()
 
 const app = express()
 
-app.use(cors())
+app.use(cors({
+  origin: ['chrome-extension://coamoeeenfhnihibejoohkhcplckkjpm', 'https://chatgpt.com', 'http://localhost:3000'], // Reemplaza con el origen de tu frontend
+  credentials: true, // Permite enviar cookies
+}))
 app.use(express.json())
 app.use(cookieParser())
 
