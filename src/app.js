@@ -8,7 +8,7 @@ dotenv.config()
 const app = express()
 
 app.use(cors({
-  origin: ['chrome-extension://coamoeeenfhnihibejoohkhcplckkjpm', 'https://chatgpt.com', 'http://localhost:3000'], // Reemplaza con el origen de tu frontend
+  origin: ['chrome-extension://coamoeeenfhnihibejoohkhcplckkjpm', 'https://chatgpt.com', 'https://gpt-organizer-backend.onrender.com'], 
   credentials: true, 
 }))
 app.use(express.json())
