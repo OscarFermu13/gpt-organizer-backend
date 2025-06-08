@@ -63,6 +63,7 @@ async function deleteFolder(req, res) {
         if (!folder || folder.userId !== userId) return res.status(403).json({ error: 'Unauthorized' })
 
         await prisma.chat.deleteMany({ where: { folderId: id } });
+        await prisma.folder.deleteMany({ where: { parentId: id } });
         await prisma.folder.delete({ where: { id } })
         res.json({ message: 'Folder deleted' })
     } catch (error) {
