@@ -55,21 +55,51 @@ async function updateFolder(req, res) {
 }
 
 async function deleteFolder(req, res) {
-    const { id } = req.params
-    const userId = req.user.userId
+  const { id } = req.params;
+  const userId = req.user.userId;
 
-    try {
-        const folder = await prisma.folder.findUnique({ where: { id } })
-        if (!folder || folder.userId !== userId) return res.status(403).json({ error: 'Unauthorized' })
-
-        await prisma.chat.deleteMany({ where: { folderId: id } });
-        await prisma.folder.deleteMany({ where: { parentId: id } });
-        await prisma.folder.delete({ where: { id } })
-        res.json({ message: 'Folder deleted' })
-    } catch (error) {
-        console.error('Error deleting folder:', error)
-        res.status(500).json({ error: 'Error deleting folder' })
+  try {
+    const folder = await prisma.folder.findUnique({ where: { id } });
+    if (!folder || folder.userId !== userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
     }
+
+    async function getAllSubfolderIds(folderId) {
+      const children = await prisma.folder.findMany({
+        where: { parentId: folderId },
+        select: { id: true }
+      });
+
+      const subfolderIds = [];
+
+      for (const child of children) {
+        subfolderIds.push(child.id);
+        const nestedIds = await getAllSubfolderIds(child.id);
+        subfolderIds.push(...nestedIds);
+      }
+
+      return subfolderIds;
+    }
+
+    const allFolderIds = [folder.id, ...(await getAllSubfolderIds(folder.id))];
+
+    await prisma.chat.deleteMany({
+      where: {
+        parentId: { in: allFolderIds }
+      }
+    });
+
+    await prisma.folder.deleteMany({
+      where: {
+        id: { in: allFolderIds }
+      }
+    });
+
+    res.json({ message: 'Folder and related content deleted' });
+  } catch (error) {
+    console.error('Error deleting folder:', error);
+    res.status(500).json({ error: 'Error deleting folder' });
+  }
 }
 
 module.exports = {
