@@ -85,7 +85,7 @@ async function deleteFolder(req, res) {
 
     await prisma.chat.deleteMany({
       where: {
-        parentId: { in: allFolderIds }
+        folderId: { in: allFolderIds }
       }
     });
 
