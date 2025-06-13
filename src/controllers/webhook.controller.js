@@ -2,25 +2,25 @@ const prisma = require('../lib/prisma');
 
 async function handleGumroadWebhook(req, res) {
   const {
-    purchaser_email,
+    email,
     subscription_id,
     charge_occurrence,
     cancel_reason,
-    product_permalink
+    permalink
   } = req.body;
 
-  if (product_permalink !== 'gpt-organizer') {
-    console.warn('Webhook received for invalid product:', product_permalink);
+  if (permalink !== 'gpt-organizer') {
+    console.warn('Webhook received for invalid product:', permalink);
     return res.status(400).json({ error: 'Invalid product' });
   }
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email: purchaser_email }
+      where: { email: email }
     });
 
     if (!user) {
-      console.warn(`Webhook: user not found for email ${purchaser_email}`);
+      console.warn(`Webhook: user not found for email ${email}`);
       return res.status(404).json({ error: 'User not found' });
     }
 
@@ -59,6 +59,7 @@ async function handleGumroadWebhook(req, res) {
     }
 
     res.json({ received: true });
+    res.status(200).json({ message: 'Webhook processed successfully' });
   } catch (err) {
     console.error('Error processing Gumroad webhook:', err);
     res.status(500).json({ error: 'Server error' });
