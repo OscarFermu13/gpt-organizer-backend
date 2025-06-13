@@ -90,7 +90,7 @@ async function validateUser(req, res, next) {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    res.json({ email: user.email });
+    res.json({ email: user.email, plan: user.plan, trialEndsAt: user.trialEndsAt, subscriptionId: user.subscriptionId });
   } catch (error) {
     res.status(401).json({ error: 'Invalid or expired token' });
   }

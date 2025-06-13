@@ -21,6 +21,9 @@ model User {
   folders   Folder[]
   tags      Tag[]
   createdAt DateTime @default(now())
+  plan      String @default("free")
+  trialEndsAt DateTime @default(now())
+  subscriptionId  String?
 }
 
 model Chat {
