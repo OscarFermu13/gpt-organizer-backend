@@ -31,4 +31,10 @@ app.use('/chats', chatRoutes)
 const folderRoutes = require('./routes/folder.route')
 app.use('/folders', folderRoutes)
 
+const billingRoute = require('./routes/billing.route');
+app.use('/billing', billingRoute);
+
+const webhookRoute = require('./routes/webhook.route');
+app.use('/webhook', webhookRoute);
+
 module.exports = app
