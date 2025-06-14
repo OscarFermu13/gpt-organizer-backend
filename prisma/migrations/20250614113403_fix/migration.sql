@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ALTER COLUMN "trialEndsAt" DROP NOT NULL,
+ALTER COLUMN "trialEndsAt" DROP DEFAULT;

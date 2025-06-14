@@ -1,67 +1,51 @@
 const prisma = require('../lib/prisma');
+const { syncUserSubscription } = require('../services/gumroad.service');
 
 async function handleGumroadWebhook(req, res) {
-  const {
-    email,
-    subscription_id,
-    charge_occurrence,
-    cancel_reason,
-    product_permalink
-  } = req.body;
-
-  if (product_permalink !== 'https://oscarfermi.gumroad.com/l/gpt-organizer') {
-    console.warn('Webhook received for invalid product:', product_permalink);
-    return res.status(400).json({ error: 'Invalid product' });
-  }
-
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: email }
-    });
+    const {
+      email,
+      subscription_id,
+      product_permalink
+    } = req.body;
+
+    if (!email || !subscription_id) {
+      console.warn('Webhook missing required fields:', req.body);
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (product_permalink !== 'https://oscarfermi.gumroad.com/l/gpt-organizer') {
+      console.warn(`Invalid product permalink: ${product_permalink}`);
+      return res.status(400).json({ error: 'Invalid product' });
+    }
+
+    let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      console.warn(`Webhook: user not found for email ${email}`);
-      return res.status(404).json({ error: 'User not found' });
+      // Auto-crear usuario si no existe
+      user = await prisma.user.create({
+        data: {
+          email,
+          subscriptionId: subscription_id,
+          plan: 'free'
+        }
+      });
+      console.log(`Created user ${email}`);
+    } else if (!user.subscriptionId) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { subscriptionId: subscription_id }
+      });
+      console.log(`Updated user ${email} with subscriptionId`);
     }
 
-    if (cancel_reason) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          plan: 'free',
-          subscriptionId: null
-        }
-      });
-      console.log(`User ${user.email} subscription cancelled.`);
-    } else if (charge_occurrence === 1) {
-      // First charge occurrence = trial
-      const trialEndsAt = new Date();
-      trialEndsAt.setDate(trialEndsAt.getDate() + 7); 
+    // Sincronizamos con Gumroad API
+    await syncUserSubscription(user.id);
 
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          plan: 'pro',
-          trialEndsAt,
-          subscriptionId: subscription_id
-        }
-      });
-      console.log(`User ${user.email} started trial.`);
-    } else {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          plan: 'pro',
-          subscriptionId: subscription_id
-        }
-      });
-      console.log(`User ${user.email} subscription payment received.`);
-    }
-
-    res.status(200).json({ message: 'Webhook processed successfully' });
+    res.status(200).json({ received: true });
   } catch (err) {
     console.error('Error processing Gumroad webhook:', err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
 
