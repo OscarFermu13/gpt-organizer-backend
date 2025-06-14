@@ -41,7 +41,7 @@ async function handleGumroadWebhook(req, res) {
       console.log(`Updated user ${email} with subscriptionId`);
     }
 
-    await syncUserSubscription(user.id);
+    await syncUserSubscription(user.email);
 
     res.status(200).json({ received: true });
   } catch (err) {

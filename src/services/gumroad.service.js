@@ -4,22 +4,24 @@ const prisma = require('../lib/prisma');
 const GUMROAD_API_BASE = 'https://api.gumroad.com/v2';
 const GUMROAD_ACCESS_TOKEN = process.env.GUMROAD_ACCESS_TOKEN;
 
-async function fetchSubscription(subscriptionId) {
-  const url = `${GUMROAD_API_BASE}/resource_subscriptions`;
+const productId = '';
+
+async function fetchSubscription(userEmail) {
+  const url = `${GUMROAD_API_BASE}/products/${productId}/subscribers`;
 
   try {
     const response = await axios.get(url, {
       params: {
         access_token: GUMROAD_ACCESS_TOKEN,
-        resource_name: "sale"
+        email: userEmail
       }
     });
 
-    const subscriptions = response.data.resource_subscriptions;
-    const subscription = subscriptions.find(sub => sub.id === subscriptionId);
+    const subscriptions = response.data.subscribers;
+    const subscription = subscriptions.find(sub => sub.user_email === userEmail);
 
     if (!subscription) {
-      console.warn(`No subscription found for ID ${subscriptionId}`);
+      console.warn(`No subscription found for email ${userEmail}`);
       return null;
     }
 
