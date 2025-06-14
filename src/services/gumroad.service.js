@@ -17,7 +17,8 @@ async function fetchSubscription(userEmail) {
       }
     });
 
-    console.log("response data: " + JSON.stringify(response));
+    console.log(response);
+    console.log(response.data);
 
     const subscriptions = response.data.subscribers;
     const subscription = subscriptions.find(sub => sub.user_email === userEmail);
