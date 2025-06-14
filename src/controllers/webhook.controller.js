@@ -6,7 +6,8 @@ async function handleGumroadWebhook(req, res) {
     const {
       email,
       subscription_id,
-      product_permalink
+      product_permalink,
+      sale_id
     } = req.body;
 
     if (!email || !subscription_id) {
@@ -38,7 +39,7 @@ async function handleGumroadWebhook(req, res) {
       console.log(`Updated user ${email} with subscriptionId`);
     }
 
-    await syncUserSubscription(user.id);
+    await syncUserSubscription(user.id, sale_id);
 
     res.status(200).json({ received: true });
   } catch (err) {
