@@ -39,7 +39,6 @@ async function handleGumroadWebhook(req, res) {
       console.log(`Updated user ${email} with subscriptionId`);
     }
 
-    // Sincronizamos con Gumroad API
     await syncUserSubscription(user.id);
 
     res.status(200).json({ received: true });

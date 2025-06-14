@@ -5,7 +5,7 @@ const GUMROAD_API_BASE = 'https://api.gumroad.com/v2';
 const GUMROAD_ACCESS_TOKEN = process.env.GUMROAD_ACCESS_TOKEN;
 
 async function fetchSubscription(subscriptionId) {
-  const url = `${GUMROAD_API_BASE}/subscriptions/${subscriptionId}`;
+  const url = `${GUMROAD_API_BASE}/resource_subscriptions/${subscriptionId}`;
   
   try {
     const response = await axios.get(url, {
