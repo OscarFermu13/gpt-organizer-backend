@@ -9,7 +9,7 @@ async function handleGumroadWebhook(req, res) {
     product_permalink
   } = req.body;
 
-  if (product_permalink !== 'gpt-organizer') {
+  if (product_permalink !== 'https://oscarfermi.gumroad.com/l/gpt-organizer') {
     console.warn('Webhook received for invalid product:', product_permalink);
     return res.status(400).json({ error: 'Invalid product' });
   }
