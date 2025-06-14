@@ -22,7 +22,7 @@ model User {
   tags      Tag[]
   createdAt DateTime @default(now())
   plan      String @default("free")
-  trialEndsAt DateTime @default(now())
+  trialEndsAt DateTime?
   subscriptionId  String?
 }
 

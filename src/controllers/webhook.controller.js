@@ -58,7 +58,6 @@ async function handleGumroadWebhook(req, res) {
       console.log(`User ${user.email} subscription payment received.`);
     }
 
-    res.json({ received: true });
     res.status(200).json({ message: 'Webhook processed successfully' });
   } catch (err) {
     console.error('Error processing Gumroad webhook:', err);
