@@ -4,7 +4,7 @@ const prisma = require('../lib/prisma');
 const GUMROAD_API_BASE = 'https://api.gumroad.com/v2';
 const GUMROAD_ACCESS_TOKEN = process.env.GUMROAD_ACCESS_TOKEN;
 
-const productId = '';
+const productId = 'ZUDX0NwceZhzahVCS-db5Q==';
 
 async function fetchSubscription(userEmail) {
   const url = `${GUMROAD_API_BASE}/products/${productId}/subscribers`;
@@ -40,7 +40,7 @@ async function syncUserSubscription(userId) {
     return;
   }
 
-  const subscription = await fetchSubscription(user.subscriptionId);
+  const subscription = await fetchSubscription(user.email);
 
   const isActive = !subscription.canceled_at;
   const createdAt = new Date(subscription.created_at);
