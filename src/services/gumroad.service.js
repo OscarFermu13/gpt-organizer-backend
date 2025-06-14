@@ -11,7 +11,7 @@ async function fetchSubscription(subscriptionId) {
     const response = await axios.get(url, {
       params: {
         access_token: GUMROAD_ACCESS_TOKEN,
-        resource_name: sale
+        resource_name: "sale"
       }
     });
 
