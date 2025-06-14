@@ -26,7 +26,7 @@ async function fetchSubscription(subscriptionId) {
     return subscription;
 
   } catch (err) {
-    console.error(`Error fetching resource subscriptions for ${resourceName}:`, err.response?.data || err.message);
+    console.error(`Error fetching resource subscriptions for sale:`, err.response?.data || err.message);
     throw new Error('Failed to fetch resource subscriptions');
   }
 }

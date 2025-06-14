@@ -22,7 +22,6 @@ async function handleGumroadWebhook(req, res) {
     let user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      // Auto-crear usuario si no existe
       user = await prisma.user.create({
         data: {
           email,
