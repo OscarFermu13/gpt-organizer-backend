@@ -9,6 +9,9 @@ async function handleGumroadWebhook(req, res) {
       product_permalink
     } = req.body;
 
+    //Test logging
+    console.log(req.body);
+
     if (!email || !subscription_id) {
       console.warn('Webhook missing required fields:', req.body);
       return res.status(400).json({ error: 'Missing required fields' });
