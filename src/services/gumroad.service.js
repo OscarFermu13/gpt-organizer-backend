@@ -5,19 +5,29 @@ const GUMROAD_API_BASE = 'https://api.gumroad.com/v2';
 const GUMROAD_ACCESS_TOKEN = process.env.GUMROAD_ACCESS_TOKEN;
 
 async function fetchSubscription(subscriptionId) {
-  const url = `${GUMROAD_API_BASE}/resource_subscriptions/${subscriptionId}`;
-  
+  const url = `${GUMROAD_API_BASE}/resource_subscriptions`;
+
   try {
     const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${GUMROAD_ACCESS_TOKEN}`
+      params: {
+        access_token: GUMROAD_ACCESS_TOKEN,
+        resource_name: sale
       }
     });
-    
-    return response.data.subscription;
+
+    const subscriptions = response.data.resource_subscriptions;
+    const subscription = subscriptions.find(sub => sub.id === subscriptionId);
+
+    if (!subscription) {
+      console.warn(`No subscription found for ID ${subscriptionId}`);
+      return null;
+    }
+
+    return subscription;
+
   } catch (err) {
-    console.error(`Error fetching subscription ${subscriptionId}:`, err.response?.data || err.message);
-    throw new Error('Failed to fetch subscription');
+    console.error(`Error fetching resource subscriptions for ${resourceName}:`, err.response?.data || err.message);
+    throw new Error('Failed to fetch resource subscriptions');
   }
 }
 
@@ -33,7 +43,7 @@ async function syncUserSubscription(userId) {
   const isActive = !subscription.canceled_at;
   const createdAt = new Date(subscription.created_at);
   const trialEndsAt = new Date(createdAt);
-  trialEndsAt.setDate(trialEndsAt.getDate() + 7); // 7 días de trial
+  trialEndsAt.setDate(trialEndsAt.getDate() + 7);
 
   await prisma.user.update({
     where: { id: user.id },
