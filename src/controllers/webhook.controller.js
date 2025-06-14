@@ -6,11 +6,11 @@ async function handleGumroadWebhook(req, res) {
     subscription_id,
     charge_occurrence,
     cancel_reason,
-    permalink
+    product_permalink
   } = req.body;
 
-  if (permalink !== 'gpt-organizer') {
-    console.warn('Webhook received for invalid product:', permalink);
+  if (product_permalink !== 'gpt-organizer') {
+    console.warn('Webhook received for invalid product:', product_permalink);
     return res.status(400).json({ error: 'Invalid product' });
   }
 
