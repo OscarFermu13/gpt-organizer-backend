@@ -14,9 +14,6 @@ async function fetchSubscription(saleId) {
       }
     });
 
-    console.log(response);
-    console.log(response.data);
-
     const subscription = response.data.sale;
 
     if (!subscription) {
