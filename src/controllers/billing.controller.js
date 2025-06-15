@@ -1,33 +1,33 @@
 const prisma = require('../lib/prisma');
+const { createCheckoutSession, createCustomerPortalSession } = require('../services/stripe.service');
 
-async function getBillingStatus(req, res) {
-  const userId = req.user.userId;
-
+async function startCheckout(req, res) {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { plan: true, trialEndsAt: true }
-    });
+    const user = req.user; 
+    const url = await createCheckoutSession(user.email);
+    res.json({ url });
+  } catch (err) {
+    console.error('Error creating checkout session:', err);
+    res.status(500).json({ error: 'Could not create checkout session' });
+  }
+}
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+async function startCustomerPortal(req, res) {
+  try {
+    const user = req.user;
+    if (!user.stripeCustomerId) {
+      return res.status(400).json({ error: 'User has no Stripe customer ID' });
     }
 
-    const now = new Date();
-    const isTrial = user.trialEndsAt && new Date(user.trialEndsAt) > now;
-    const isPro = user.plan === 'pro';
-
-    return res.json({
-      plan: user.plan,
-      trialEndsAt: user.trialEndsAt,
-      isPro: isPro || isTrial
-    });
+    const url = await createCustomerPortalSession(user.stripeCustomerId);
+    res.json({ url });
   } catch (err) {
-    console.error('Error getting billing status:', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error creating portal session:', err);
+    res.status(500).json({ error: 'Could not create portal session' });
   }
 }
 
 module.exports = {
-  getBillingStatus
+  startCheckout,
+  startCustomerPortal
 };

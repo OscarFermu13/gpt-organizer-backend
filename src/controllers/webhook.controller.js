@@ -1,58 +1,62 @@
+const stripe = require('../lib/stripe');
 const prisma = require('../lib/prisma');
-const { syncUserSubscription } = require('../services/gumroad.service');
 
-async function handleGumroadWebhook(req, res) {
+async function handleStripeWebhook(req, res) {
+  const sig = req.headers['stripe-signature'];
+
+  let event;
   try {
-    const {
-      email,
-      subscription_id,
-      product_permalink,
-      sale_id
-    } = req.body;
-
-    console.log(req.body);
-
-    if (!email || !subscription_id) {
-      console.warn('Webhook missing required fields:', req.body);
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    if (product_permalink !== 'https://oscarfermi.gumroad.com/l/gpt-organizer') {
-      console.warn(`Invalid product permalink: ${product_permalink}`);
-      return res.status(400).json({ error: 'Invalid product' });
-    }
-
-    let user = await prisma.user.findUnique({ where: { email } });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email,
-          subscriptionId: subscription_id,
-          plan: 'free',
-          password: '1234'
-        }
-      });
-      console.log(`Created user ${email}`);
-    } else if (!user.subscriptionId) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { subscriptionId: subscription_id }
-      });
-      console.log(`Updated user ${email} with subscriptionId`);
-    }
-
-    await syncUserSubscription(user.id, sale_id);
-
-    res.status(200).json({ received: true });
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.error('Error processing Gumroad webhook:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  const data = event.data.object;
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed':
+        // Guarda stripeCustomerId al usuario
+        await prisma.user.update({
+          where: { email: data.customer_email },
+          data: { 
+            stripeCustomerId: data.customer,
+            plan: 'pro'
+          }
+        });
+        console.log(`User ${data.customer_email} checkout completed.`);
+        break;
+
+      case 'customer.subscription.updated':
+      case 'invoice.payment_succeeded':
+        // Actualiza plan si es necesario
+        console.log(`Subscription updated: ${data.id}`);
+        break;
+
+      case 'customer.subscription.deleted':
+        await prisma.user.updateMany({
+          where: { stripeCustomerId: data.customer },
+          data: { plan: 'free' }
+        });
+        console.log(`Subscription deleted: ${data.id}`);
+        break;
+
+      case 'invoice.payment_failed':
+        console.warn(`Payment failed for subscription: ${data.subscription}`);
+        break;
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Error handling webhook:', err);
+    res.status(500).json({ error: 'Webhook handler error' });
   }
 }
 
 module.exports = {
-  handleGumroadWebhook
+  handleStripeWebhook
 };
-
-
