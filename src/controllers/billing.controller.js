@@ -1,10 +1,25 @@
 const prisma = require('../lib/prisma');
-const { createCheckoutSession, createCustomerPortalSession } = require('../services/stripe.service');
+const { createCheckoutSession, createCustomerPortalSession, getCustomerByEmail } = require('../services/stripe.service');
 
 async function startCheckout(req, res) {
   try {
-    const user = req.user; 
-    const url = await createCheckoutSession(user.email);
+    const userId = req.user.userId;
+    
+    // Obtener datos completos del usuario
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verificar si ya tiene una suscripción activa
+    if (user.plan === 'pro') {
+      return res.status(400).json({ error: 'User already has an active subscription' });
+    }
+
+    const url = await createCheckoutSession(user.email, userId);
     res.json({ url });
   } catch (err) {
     console.error('Error creating checkout session:', err);
@@ -14,12 +29,36 @@ async function startCheckout(req, res) {
 
 async function startCustomerPortal(req, res) {
   try {
-    const user = req.user;
-    if (!user.stripeCustomerId) {
-      return res.status(400).json({ error: 'User has no Stripe customer ID' });
+    const userId = req.user.userId;
+    
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    const url = await createCustomerPortalSession(user.stripeCustomerId);
+    let stripeCustomerId = user.stripeCustomerId;
+
+    // Si no tiene stripeCustomerId, intentar obtenerlo por email
+    if (!stripeCustomerId) {
+      const customer = await getCustomerByEmail(user.email);
+      if (customer) {
+        stripeCustomerId = customer.id;
+        // Actualizar el usuario con el stripeCustomerId
+        await prisma.user.update({
+          where: { id: userId },
+          data: { stripeCustomerId }
+        });
+      }
+    }
+
+    if (!stripeCustomerId) {
+      return res.status(400).json({ error: 'No Stripe customer found. Please complete a purchase first.' });
+    }
+
+    const url = await createCustomerPortalSession(stripeCustomerId);
     res.json({ url });
   } catch (err) {
     console.error('Error creating portal session:', err);
@@ -27,7 +66,38 @@ async function startCustomerPortal(req, res) {
   }
 }
 
+async function getSubscriptionStatus(req, res) {
+  try {
+    const userId = req.user.userId;
+    
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        plan: true,
+        stripeCustomerId: true,
+        trialEndsAt: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      plan: user.plan,
+      stripeCustomerId: user.stripeCustomerId,
+      trialEndsAt: user.trialEndsAt,
+      hasActiveSubscription: user.plan === 'pro'
+    });
+  } catch (err) {
+    console.error('Error getting subscription status:', err);
+    res.status(500).json({ error: 'Could not get subscription status' });
+  }
+}
+
 module.exports = {
   startCheckout,
-  startCustomerPortal
+  startCustomerPortal,
+  getSubscriptionStatus
 };

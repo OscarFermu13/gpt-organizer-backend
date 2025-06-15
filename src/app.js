@@ -11,6 +11,9 @@ app.use(cors({
   origin: ['chrome-extension://coamoeeenfhnihibejoohkhcplckkjpm', 'https://chatgpt.com', 'https://gpt-organizer-backend.onrender.com', 'http://localhost:3000'], 
   credentials: true, 
 }))
+
+app.use('/webhook/stripe', express.raw({ type: 'application/json' }))
+
 app.use(express.json())
 app.use(cookieParser())
 
