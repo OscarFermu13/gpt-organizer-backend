@@ -1,6 +1,8 @@
 function requireProPlan(req, res, next) {
   const user = req.user;
 
+  console.log(req.user)
+
   if (user.plan === 'pro') return next();
 
   const now = new Date();
