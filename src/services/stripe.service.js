@@ -13,6 +13,13 @@ async function createCheckoutSession(userEmail, userId) {
       customerId = existingCustomers.data[0].id;
     }
 
+    // Verificar si el usuario ya tuvo trial antes
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail }
+    });
+    
+    const hasHadTrial = user?.trialEndsAt !== null || user?.stripeCustomerId !== null;
+
     const sessionConfig = {
       payment_method_types: ['card'],
       mode: 'subscription',
@@ -20,13 +27,22 @@ async function createCheckoutSession(userEmail, userId) {
         price: process.env.STRIPE_PRICE_ID,
         quantity: 1,
       }],
-      trial_period_days: 7,
       success_url: `${process.env.FRONTEND_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/`,
       metadata: {
-        userId: userId // Agregar userId en metadata para el webhook
+        userId: userId
       }
     };
+
+    // Solo agregar trial si es nuevo usuario
+    if (!hasHadTrial) {
+      sessionConfig.subscription_data = {
+        trial_period_days: 7,
+        metadata: {
+          userId: userId
+        }
+      };
+    }
 
     // Si existe un cliente, usarlo; si no, Stripe creará uno nuevo
     if (customerId) {
