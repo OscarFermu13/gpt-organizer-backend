@@ -1,103 +1,93 @@
-const prisma = require('../lib/prisma');
-const { createCheckoutSession, createCustomerPortalSession, getCustomerByEmail } = require('../services/stripe.service');
+const stripe = require('../lib/stripe');
 
-async function startCheckout(req, res) {
+async function createCheckoutSession(userEmail, userId) {
   try {
-    const userId = req.user.userId;
-    
-    // Obtener datos completos del usuario
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
+    // Verificar si ya existe un cliente con este email
+    const existingCustomers = await stripe.customers.list({
+      email: userEmail,
+      limit: 1
     });
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+
+    let customerId;
+    if (existingCustomers.data.length > 0) {
+      customerId = existingCustomers.data[0].id;
     }
 
-    // Verificar si ya tiene una suscripción activa
-    if (user.plan === 'pro') {
-      return res.status(400).json({ error: 'User already has an active subscription' });
+    const sessionConfig = {
+      payment_method_types: ['card'],
+      mode: 'subscription',
+      line_items: [{
+        price: process.env.STRIPE_PRICE_ID,
+        quantity: 1,
+      }],
+      success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+      metadata: {
+        userId: userId // Agregar userId en metadata para el webhook
+      }
+    };
+
+    // Si existe un cliente, usarlo; si no, Stripe creará uno nuevo
+    if (customerId) {
+      sessionConfig.customer = customerId;
+    } else {
+      sessionConfig.customer_email = userEmail;
     }
 
-    const url = await createCheckoutSession(user.email, userId);
-    res.json({ url });
-  } catch (err) {
-    console.error('Error creating checkout session:', err);
-    res.status(500).json({ error: 'Could not create checkout session' });
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    return session.url;
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    throw error;
   }
 }
 
-async function startCustomerPortal(req, res) {
+async function createCustomerPortalSession(customerId) {
   try {
-    const userId = req.user.userId;
-    
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${process.env.FRONTEND_URL}/dashboard`
     });
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    let stripeCustomerId = user.stripeCustomerId;
-
-    // Si no tiene stripeCustomerId, intentar obtenerlo por email
-    if (!stripeCustomerId) {
-      const customer = await getCustomerByEmail(user.email);
-      if (customer) {
-        stripeCustomerId = customer.id;
-        // Actualizar el usuario con el stripeCustomerId
-        await prisma.user.update({
-          where: { id: userId },
-          data: { stripeCustomerId }
-        });
-      }
-    }
-
-    if (!stripeCustomerId) {
-      return res.status(400).json({ error: 'No Stripe customer found. Please complete a purchase first.' });
-    }
-
-    const url = await createCustomerPortalSession(stripeCustomerId);
-    res.json({ url });
-  } catch (err) {
-    console.error('Error creating portal session:', err);
-    res.status(500).json({ error: 'Could not create portal session' });
+    return portalSession.url;
+  } catch (error) {
+    console.error('Error creating customer portal session:', error);
+    throw error;
   }
 }
 
-async function getSubscriptionStatus(req, res) {
+async function getCustomerByEmail(email) {
   try {
-    const userId = req.user.userId;
-    
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        email: true,
-        plan: true,
-        stripeCustomerId: true,
-        trialEndsAt: true
-      }
+    const customers = await stripe.customers.list({
+      email: email,
+      limit: 1
     });
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    if (customers.data.length > 0) {
+      return customers.data[0];
     }
+    
+    return null;
+  } catch (error) {
+    console.error('Error getting customer by email:', error);
+    throw error;
+  }
+}
 
-    res.json({
-      plan: user.plan,
-      stripeCustomerId: user.stripeCustomerId,
-      trialEndsAt: user.trialEndsAt,
-      hasActiveSubscription: user.plan === 'pro'
-    });
-  } catch (err) {
-    console.error('Error getting subscription status:', err);
-    res.status(500).json({ error: 'Could not get subscription status' });
+async function getSubscription(subscriptionId) {
+  try {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    return subscription;
+  } catch (error) {
+    console.error('Error getting subscription:', error);
+    throw error;
   }
 }
 
 module.exports = {
-  startCheckout,
-  startCustomerPortal,
-  getSubscriptionStatus
+  createCheckoutSession,
+  createCustomerPortalSession,
+  getCustomerByEmail,
+  getSubscription
 };
