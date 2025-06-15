@@ -1,14 +1,24 @@
-function requireProPlan(req, res, next) {
-  const user = req.user;
+const prisma = require('../lib/prisma');
 
-  console.log(req.user)
+async function requireProPlan(req, res, next) {
+  const userId = req.user?.userId;
 
-  if (user.plan === 'pro') return next();
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-  const now = new Date();
-  if (user.trialEndsAt && new Date(user.trialEndsAt) > now) return next();
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
-  return res.status(403).json({ error: 'Upgrade required' });
+    if (!user || user.plan !== 'pro') {
+      return res.status(403).json({ error: 'Upgrade required' });
+    }
+
+    next();
+  } catch (err) {
+    console.error('Error checking pro plan:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 }
 
-module.exports = requireProPlan
+module.exports = requireProPlan;
