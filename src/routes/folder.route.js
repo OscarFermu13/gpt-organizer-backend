@@ -11,8 +11,8 @@ const {
 } = require('../controllers/folder.controller')
 
 router.get('/', auth, pro, getFolders)
-router.post('/', auth, createFolder)
-router.put('/:id', auth, updateFolder)
-router.delete('/:id', auth, deleteFolder)
+router.post('/', auth, pro, createFolder)
+router.put('/:id', auth, pro, updateFolder)
+router.delete('/:id', auth, pro, deleteFolder)
 
 module.exports = router
