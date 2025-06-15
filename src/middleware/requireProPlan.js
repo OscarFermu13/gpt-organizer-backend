@@ -8,3 +8,5 @@ function requireProPlan(req, res, next) {
 
   return res.status(403).json({ error: 'Upgrade required' });
 }
+
+module.exports = requireProPlan
