@@ -11,7 +11,11 @@ async function requireProPlan(req, res, next) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     const now = new Date();
 
-    if (!user || user.plan !== 'pro' || (user.trialEndsAt && new Date(user.trialEndsAt) > now)) {
+    if (!user) {
+      return res.status(403).json({ error: 'No user found' });
+    }
+
+    if (user.plan === 'free' && user.trialEndsAt && new Date(user.trialEndsAt) < now) {
       return res.status(403).json({ error: 'Upgrade required' });
     }
 
