@@ -1,4 +1,5 @@
 const stripe = require('../lib/stripe');
+const prisma = require('../lib/prisma');
 
 async function createCheckoutSession(userEmail, userId) {
   try {
