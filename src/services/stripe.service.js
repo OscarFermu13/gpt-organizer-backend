@@ -1,6 +1,6 @@
 const stripe = require('../lib/stripe');
 
-async function createCheckoutSession(userEmail, userId) {More actions
+async function createCheckoutSession(userEmail, userId) {
   try {
     // Verificar si ya existe un cliente con este email
     const existingCustomers = await stripe.customers.list({
