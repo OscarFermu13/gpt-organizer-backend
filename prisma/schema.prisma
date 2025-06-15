@@ -25,7 +25,6 @@ model User {
   trialEndsAt DateTime?
   subscriptionId  String?
   stripeCustomerId  String?
-  subscriptionStatus  String?
 }
 
 model Chat {

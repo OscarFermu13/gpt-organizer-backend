@@ -25,11 +25,14 @@ async function register(req, res) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
+    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
+        plan: 'free',
+        trialEndsAt
       },
     })
 
