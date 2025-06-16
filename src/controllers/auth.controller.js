@@ -5,11 +5,11 @@ const jwt = require('jsonwebtoken')
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 
 const cookieOptions = {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'None',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    };
+  httpOnly: true,
+  secure: true,
+  sameSite: 'None',
+  maxAge: 7 * 24 * 60 * 60 * 1000
+};
 
 async function register(req, res) {
   const { email, password } = req.body
@@ -77,9 +77,79 @@ async function logout(req, res) {
   res.status(200).json({ message: 'Logged out successfully' })
 }
 
+async function changePassword(req, res) {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Current and new password are required' });
+  }
+
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedNewPassword },
+    });
+
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+async function deleteUser(req, res) {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await prisma.user.delete({
+      where: { id: user.id },
+    });
+
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+    });
+
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 async function validateUser(req, res, next) {
   const token = req.cookies.token;
-  
+
   if (!token) {
     return res.status(401).json({ error: 'No token' })
   }
@@ -101,5 +171,7 @@ module.exports = {
   register,
   login,
   logout,
+  changePassword,
+  deleteUser,
   validateUser,
 }
