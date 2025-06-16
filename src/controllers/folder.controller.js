@@ -13,7 +13,6 @@ async function getFolders(req, res) {
         })
         res.json(folders)
     } catch (error) {
-        console.error('Error fetching folders:', error)
         res.status(500).json({ error: 'Error fetching folders' })
     }
 }
@@ -28,7 +27,6 @@ async function createFolder(req, res) {
         })
         res.status(201).json(folder)
     } catch (error) {
-        console.error('Error creating folder:', error)
         res.status(500).json({ error: 'Error creating folder' })
     }
 }
@@ -48,7 +46,6 @@ async function updateFolder(req, res) {
         })
         res.json(updated)
     } catch (error) {
-        console.error('Error updating folder:', error)
         res.status(500).json({ error: 'Error updating folder' })
     }
 
@@ -97,7 +94,6 @@ async function deleteFolder(req, res) {
 
     res.json({ message: 'Folder and related content deleted' });
   } catch (error) {
-    console.error('Error deleting folder:', error);
     res.status(500).json({ error: 'Error deleting folder' });
   }
 }

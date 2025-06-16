@@ -22,7 +22,6 @@ async function startCheckout(req, res) {
     const url = await createCheckoutSession(user.email, userId);
     res.json({ url });
   } catch (err) {
-    console.error('Error creating checkout session:', err);
     res.status(500).json({ error: 'Could not create checkout session' });
   }
 }
@@ -61,7 +60,6 @@ async function startCustomerPortal(req, res) {
     const url = await createCustomerPortalSession(stripeCustomerId);
     res.json({ url });
   } catch (err) {
-    console.error('Error creating portal session:', err);
     res.status(500).json({ error: 'Could not create portal session' });
   }
 }
@@ -91,7 +89,6 @@ async function getSubscriptionStatus(req, res) {
       hasActiveSubscription: user.plan === 'pro'
     });
   } catch (err) {
-    console.error('Error getting subscription status:', err);
     res.status(500).json({ error: 'Could not get subscription status' });
   }
 }

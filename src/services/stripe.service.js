@@ -38,7 +38,6 @@ async function createCheckoutSession(userEmail, userId) {
 
     return session.url;
   } catch (error) {
-    console.error('Error creating checkout session:', error);
     throw error;
   }
 }
@@ -52,7 +51,6 @@ async function createCustomerPortalSession(customerId) {
 
     return portalSession.url;
   } catch (error) {
-    console.error('Error creating customer portal session:', error);
     throw error;
   }
 }
@@ -70,7 +68,6 @@ async function getCustomerByEmail(email) {
 
     return null;
   } catch (error) {
-    console.error('Error getting customer by email:', error);
     throw error;
   }
 }
@@ -80,7 +77,6 @@ async function getSubscription(subscriptionId) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     return subscription;
   } catch (error) {
-    console.error('Error getting subscription:', error);
     throw error;
   }
 }

@@ -8,7 +8,6 @@ async function handleStripeWebhook(req, res) {
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -46,7 +45,6 @@ async function handleStripeWebhook(req, res) {
 
     res.json({ received: true });
   } catch (err) {
-    console.error('Error handling webhook:', err);
     res.status(500).json({ error: 'Webhook handler error' });
   }
 }
@@ -69,7 +67,6 @@ async function handleCheckoutCompleted(session) {
     }
 
     if (!user) {
-      console.error('User not found for checkout session:', session.id);
       return;
     }
 
@@ -84,7 +81,6 @@ async function handleCheckoutCompleted(session) {
 
     console.log(`User ${user.email} upgraded to pro plan`);
   } catch (error) {
-    console.error('Error in handleCheckoutCompleted:', error);
     throw error;
   }
 }
@@ -103,7 +99,6 @@ async function handleSubscriptionCreated(subscription) {
 
     console.log(`Subscription created: ${subscription.id}`);
   } catch (error) {
-    console.error('Error in handleSubscriptionCreated:', error);
     throw error;
   }
 }
@@ -124,7 +119,6 @@ async function handleSubscriptionUpdated(subscription) {
 
     console.log(`Subscription updated: ${subscription.id}, status: ${subscription.status}`);
   } catch (error) {
-    console.error('Error in handleSubscriptionUpdated:', error);
     throw error;
   }
 }
@@ -143,7 +137,6 @@ async function handleSubscriptionDeleted(subscription) {
 
     console.log(`Subscription deleted: ${subscription.id}`);
   } catch (error) {
-    console.error('Error in handleSubscriptionDeleted:', error);
     throw error;
   }
 }

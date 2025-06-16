@@ -21,7 +21,6 @@ async function requireProPlan(req, res, next) {
 
     next();
   } catch (err) {
-    console.error('Error checking pro plan:', err);
     res.status(500).json({ error: 'Server error' });
   }
 }

@@ -13,7 +13,6 @@ async function getChats(req, res) {
         })
         res.json(chats)
     } catch (error) {
-        console.error('Error fetching chats:', error)
         res.status(500).json({ error: 'Error fetching chats' })
     }
 }
@@ -41,7 +40,6 @@ async function createChat(req, res) {
 
         res.status(201).json(chat)
     } catch (error) {
-        console.error('Error creating chat:', error)
         res.status(500).json({ error: 'Error creating chat' })
     }
 }
@@ -61,7 +59,6 @@ async function updateChat(req, res) {
         })
         res.json(updated)
     } catch (error) {
-        console.error('Error updating chat:', error)
         res.status(500).json({ error: 'Error updating chat' })
     }
 
@@ -78,7 +75,6 @@ async function deleteChat(req, res) {
         await prisma.chat.delete({ where: { id } })
         res.json({ message: 'Chat deleted' })
     } catch (error) {
-        console.error('Error deleting chat:', error)
         return res.status(500).json({ error: 'Error deleting chat' })
     }
 }

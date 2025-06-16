@@ -25,9 +25,6 @@ app.get('/', (req, res) => {
 const authRoutes = require('./routes/auth.route')
 app.use('/auth', authRoutes)
 
-const tagRoutes = require('./routes/tag.route')
-app.use('/tags', tagRoutes)
-
 const chatRoutes = require('./routes/chat.route')
 app.use('/chats', chatRoutes)
 

@@ -41,7 +41,6 @@ async function register(req, res) {
     res.cookie('token', token, cookieOptions);
     res.status(201).json({ token })
   } catch (error) {
-    console.error('Error registering user:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 }
@@ -65,7 +64,6 @@ async function login(req, res) {
     res.cookie('token', token, cookieOptions);
     res.json({ token })
   } catch (error) {
-    console.error('Error logging in:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 }
