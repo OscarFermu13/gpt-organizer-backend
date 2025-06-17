@@ -37,7 +37,6 @@ model Chat {
   archived  Boolean   @default(false)
   folder    Folder?   @relation(fields: [folderId], references: [id])
   folderId  String?
-  starredMessages StarredMessage[]
 }
 
 model Folder {
@@ -57,7 +56,6 @@ model StarredMessage {
   id            String   @id @default(cuid())
   user          User     @relation(fields: [userId], references: [id])
   userId        String
-  chat          Chat     @relation(fields: [chatId], references: [id])
   chatId        String
   messageIndex  Int
   text          String
