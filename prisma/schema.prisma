@@ -57,7 +57,7 @@ model StarredMessage {
   id            String   @id @default(cuid())
   user          User     @relation(fields: [userId], references: [id])
   userId        String
-  chat          Chat     @relation(fields: [chatId], references: [chatId])
+  chat          Chat     @relation(fields: [chatId], references: [id])
   chatId        String
   messageIndex  Int
   text          String
