@@ -19,7 +19,7 @@ model User {
   password  String
   chats     Chat[]
   folders   Folder[]
-  tags      Tag[]
+  starredMessages StarredMessage[]
   createdAt DateTime @default(now())
   plan      String @default("free")
   trialEndsAt DateTime?
@@ -37,8 +37,7 @@ model Chat {
   archived  Boolean   @default(false)
   folder    Folder?   @relation(fields: [folderId], references: [id])
   folderId  String?
-  tags      ChatTag[]
-  notes     String? // Para futuras anotaciones
+  starredMessages StarredMessage[]
 }
 
 model Folder {
@@ -53,20 +52,15 @@ model Folder {
   chats    Chat[]
 }
 
-model Tag {
-  id     String    @id @default(cuid())
-  name   String
-  user   User      @relation(fields: [userId], references: [id])
-  userId String
-  chats  ChatTag[]
-}
 
-model ChatTag {
-  id     String @id @default(cuid())
-  chat   Chat   @relation(fields: [chatId], references: [id])
-  chatId String
-  tag    Tag    @relation(fields: [tagId], references: [id])
-  tagId  String
+model StarredMessage {
+  id            String   @id @default(cuid())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String
+  chat          Chat     @relation(fields: [chatId], references: [id])
+  chatId        String
+  messageIndex  Int
+  text          String
 
-  @@unique([chatId, tagId]) // evita duplicados
+  @@unique([chatId, messageIndex, userId]) 
 }

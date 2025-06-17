@@ -37,4 +37,7 @@ app.use('/billing', billingRoute);
 const webhookRoute = require('./routes/webhook.route');
 app.use('/webhook', webhookRoute);
 
+const messageRoute = require('./routes/message.route');
+app.use('/messages', messageRoute);
+
 module.exports = app
