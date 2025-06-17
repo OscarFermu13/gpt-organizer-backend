@@ -1,7 +1,7 @@
 const prisma = require('../lib/prisma');
 
 async function getMessages(req, res) {
-    const { chatId } = req.body;
+    const { chatId } = req.query;
     const userId = req.user.userId;
 
     if (!chatId) {
