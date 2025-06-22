@@ -41,6 +41,7 @@ async function createChat(req, res) {
         res.status(201).json(chat)
     } catch (error) {
         res.status(500).json({ error: 'Error creating chat' })
+        console.error(error);
     }
 }
 
