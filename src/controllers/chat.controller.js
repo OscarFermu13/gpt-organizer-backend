@@ -30,18 +30,16 @@ async function createChat(req, res) {
                 favorite,
                 archived,
                 folderId,
-                tags: { connect: tagIds.map(id => ({ id })) },
             },
             include: {
                 folder: true,
-                tags: true,
             },
         })
 
         res.status(201).json(chat)
     } catch (error) {
-        res.status(500).json({ error: 'Error creating chat' })
         console.error(error);
+        res.status(500).json({ error: 'Error creating chat' })
     }
 }
 
