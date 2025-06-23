@@ -131,9 +131,12 @@ async function deleteUser(req, res) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    await prisma.user.delete({
-      where: { id: user.id },
-    });
+    await prisma.$transaction([
+      prisma.starredMessage.deleteMany({ where: { userId: user.id } }),
+      prisma.chat.deleteMany({ where: { userId: user.id } }),
+      prisma.folder.deleteMany({ where: { userId: user.id } }),
+      prisma.user.delete({ where: { id: user.id } }),
+    ]);
 
     res.clearCookie('token', {
       httpOnly: true,
@@ -143,7 +146,7 @@ async function deleteUser(req, res) {
 
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error });
   }
 }
 
