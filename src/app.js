@@ -8,7 +8,7 @@ dotenv.config()
 const app = express()
 
 app.use(cors({
-  origin: ['chrome-extension://coamoeeenfhnihibejoohkhcplckkjpm', 'https://chatgpt.com', 'https://gpt-organizer-backend.onrender.com', 'http://localhost:3000',  'https://gpt-organizer-landing.vercel.app', 'https://gptorganizersuite.com', 'https://www.gptorganizersuite.com'], 
+  origin: ['chrome-extension://coamoeeenfhnihibejoohkhcplckkjpm', 'chrome-extension://fcdfobpfnlhkcfiapnkffcmpkgnomjdd', 'https://chatgpt.com', 'https://gpt-organizer-backend.onrender.com', 'http://localhost:3000',  'https://gpt-organizer-landing.vercel.app', 'https://gptorganizersuite.com', 'https://www.gptorganizersuite.com'], 
   credentials: true, 
 }))
 
