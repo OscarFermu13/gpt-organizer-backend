@@ -11,8 +11,6 @@ async function handleStripeWebhook(req, res) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  console.log(`Received webhook: ${event.type}`);
-
   try {
     switch (event.type) {
       case 'checkout.session.completed':
@@ -50,7 +48,6 @@ async function handleStripeWebhook(req, res) {
 }
 
 async function handleCheckoutCompleted(session) {
-  console.log('Processing checkout.session.completed:', session.id);
   
   try {
     // Obtener información de la sesión
@@ -79,15 +76,12 @@ async function handleCheckoutCompleted(session) {
       }
     });
 
-    console.log(`User ${user.email} upgraded to pro plan`);
   } catch (error) {
     throw error;
   }
 }
 
-async function handleSubscriptionCreated(subscription) {
-  console.log('Processing customer.subscription.created:', subscription.id);
-  
+async function handleSubscriptionCreated(subscription) {  
   try {
     await prisma.user.updateMany({
       where: { stripeCustomerId: subscription.customer },
@@ -97,15 +91,12 @@ async function handleSubscriptionCreated(subscription) {
       }
     });
 
-    console.log(`Subscription created: ${subscription.id}`);
   } catch (error) {
     throw error;
   }
 }
 
-async function handleSubscriptionUpdated(subscription) {
-  console.log('Processing customer.subscription.updated:', subscription.id);
-  
+async function handleSubscriptionUpdated(subscription) {  
   try {
     const plan = subscription.status === 'active' ? 'pro' : 'free';
     
@@ -117,15 +108,12 @@ async function handleSubscriptionUpdated(subscription) {
       }
     });
 
-    console.log(`Subscription updated: ${subscription.id}, status: ${subscription.status}`);
   } catch (error) {
     throw error;
   }
 }
 
-async function handleSubscriptionDeleted(subscription) {
-  console.log('Processing customer.subscription.deleted:', subscription.id);
-  
+async function handleSubscriptionDeleted(subscription) {  
   try {
     await prisma.user.updateMany({
       where: { stripeCustomerId: subscription.customer },
@@ -135,18 +123,15 @@ async function handleSubscriptionDeleted(subscription) {
       }
     });
 
-    console.log(`Subscription deleted: ${subscription.id}`);
   } catch (error) {
     throw error;
   }
 }
 
 async function handlePaymentSucceeded(invoice) {
-  console.log('Processing invoice.payment_succeeded:', invoice.id);
 }
 
 async function handlePaymentFailed(invoice) {
-  console.log('Processing invoice.payment_failed:', invoice.id);
 }
 
 module.exports = {

@@ -7,8 +7,7 @@ async function getChats(req, res) {
         const chats = await prisma.chat.findMany({
             where: { userId },
             include: {
-                folder: true,
-                tags: true,
+                folder: true
             },
         })
         res.json(chats)
@@ -18,7 +17,7 @@ async function getChats(req, res) {
 }
 
 async function createChat(req, res) {
-    const { chatId, title, favorite, archived, folderId, tagIds = [] } = req.body
+    const { chatId, title, favorite, archived, folderId } = req.body
     const userId = req.user.userId
 
     try {
@@ -38,7 +37,6 @@ async function createChat(req, res) {
 
         res.status(201).json(chat)
     } catch (error) {
-        console.error(error);
         res.status(500).json({ error: 'Error creating chat' })
     }
 }

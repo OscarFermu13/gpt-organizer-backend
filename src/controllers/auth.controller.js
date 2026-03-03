@@ -84,15 +84,8 @@ async function changePassword(req, res) {
     return res.status(400).json({ error: 'Current and new password are required' });
   }
 
-  const token = req.cookies.token;
-
-  if (!token) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -104,7 +97,6 @@ async function changePassword(req, res) {
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-
     await prisma.user.update({
       where: { id: user.id },
       data: { password: hashedNewPassword },
@@ -117,15 +109,8 @@ async function changePassword(req, res) {
 }
 
 async function deleteUser(req, res) {
-  const token = req.cookies.token;
-
-  if (!token) {
-    return res.status(401).json({ error: 'Invalid token' });
-  }
-
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -138,15 +123,10 @@ async function deleteUser(req, res) {
       prisma.user.delete({ where: { id: user.id } }),
     ]);
 
-    res.clearCookie('token', {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'None',
-    });
-
+    res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'None' });
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: error });
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
 

@@ -29,32 +29,23 @@ async function startCheckout(req, res) {
 async function startCustomerPortal(req, res) {
   try {
     const userId = req.user.userId;
-    
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
     let stripeCustomerId = user.stripeCustomerId;
 
-    // Si no tiene stripeCustomerId, intentar obtenerlo por email
     if (!stripeCustomerId) {
       const customer = await getCustomerByEmail(user.email);
-      if (customer) {
-        stripeCustomerId = customer.id;
-        // Actualizar el usuario con el stripeCustomerId
-        await prisma.user.update({
-          where: { id: userId },
-          data: { stripeCustomerId }
-        });
+      if (!customer) {
+        return res.status(400).json({ error: 'No Stripe customer found. Please complete a purchase first.' });
       }
-    }
 
-    if (!stripeCustomerId) {
-      return res.status(400).json({ error: 'No Stripe customer found. Please complete a purchase first.' });
+      stripeCustomerId = customer.id;
+      await prisma.user.update({
+        where: { id: userId },
+        data: { stripeCustomerId }
+      });
     }
 
     const url = await createCustomerPortalSession(stripeCustomerId);
