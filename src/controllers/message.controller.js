@@ -15,7 +15,6 @@ async function getMessages(req, res) {
         });
         res.json(messages);
     } catch (err) {
-        console.error('Error listing starred messages:', err);
         res.status(500).json({ error: 'Error fetching messages' });
     }
 }
@@ -42,7 +41,6 @@ async function createMessage(req, res) {
         if (err.code === 'P2002') {
             return res.status(409).json({ error: 'Message already starred' });
         }
-        console.error('Error creating starred message:', err);
         res.status(500).json({ error: 'Error starring message' });
     }
 }
@@ -66,7 +64,6 @@ async function deleteMessage(req, res) {
 
         res.json({ message: 'Starred message deleted' });
     } catch (err) {
-        console.error('Error deleting starred message:', err);
         res.status(500).json({ error: 'Error deleting message' });
     }
 }
