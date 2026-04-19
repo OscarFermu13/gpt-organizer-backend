@@ -1,6 +1,7 @@
 const prisma = require('../lib/prisma')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const { sendError, ERROR_CODES } = require('../utils/errors')
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 
@@ -15,13 +16,13 @@ async function register(req, res) {
   const { email, password } = req.body
 
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' })
+    return sendError(res, 400, ERROR_CODES.INVALID_PAYLOAD, 'Email and password are required')
   }
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } })
     if (existingUser) {
-      return res.status(409).json({ error: 'User already exists' })
+      return sendError(res, 409, ERROR_CODES.CONFLICT, 'User already exists')
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -41,7 +42,8 @@ async function register(req, res) {
     res.cookie('token', token, cookieOptions);
     res.status(201).json({ token })
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' })
+    console.error('register error:', error.message)
+    return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Internal server error')
   }
 }
 
@@ -51,12 +53,12 @@ async function login(req, res) {
   try {
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' })
+      return sendError(res, 401, ERROR_CODES.UNAUTHORIZED, 'Invalid credentials')
     }
 
     const isValid = await bcrypt.compare(password, user.password)
     if (!isValid) {
-      return res.status(401).json({ error: 'Invalid credentials' })
+      return sendError(res, 401, ERROR_CODES.UNAUTHORIZED, 'Invalid credentials')
     }
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' })
@@ -64,7 +66,8 @@ async function login(req, res) {
     res.cookie('token', token, cookieOptions);
     res.json({ token })
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' })
+    console.error('login error:', error.message)
+    return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Internal server error')
   }
 }
 
@@ -81,19 +84,19 @@ async function changePassword(req, res) {
   const { currentPassword, newPassword } = req.body;
 
   if (!currentPassword || !newPassword) {
-    return res.status(400).json({ error: 'Current and new password are required' });
+    return sendError(res, 400, ERROR_CODES.INVALID_PAYLOAD, 'Current and new password are required')
   }
 
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return sendError(res, 404, ERROR_CODES.NOT_FOUND, 'User not found')
     }
 
     const isValid = await bcrypt.compare(currentPassword, user.password);
     if (!isValid) {
-      return res.status(401).json({ error: 'Current password is incorrect' });
+      return sendError(res, 401, ERROR_CODES.UNAUTHORIZED, 'Current password is incorrect')
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
@@ -104,7 +107,8 @@ async function changePassword(req, res) {
 
     res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('changePassword error:', error.message)
+    return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Internal server error')
   }
 }
 
@@ -113,7 +117,7 @@ async function deleteUser(req, res) {
     const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return sendError(res, 404, ERROR_CODES.NOT_FOUND, 'User not found')
     }
 
     await prisma.$transaction([
@@ -126,27 +130,28 @@ async function deleteUser(req, res) {
     res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'None' });
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('deleteUser error:', error.message)
+    return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Internal server error')
   }
 }
 
-async function validateUser(req, res, next) {
+async function validateUser(req, res) {
   const token = req.cookies.token;
 
   if (!token) {
-    return res.status(401).json({ error: 'No token' })
+    return sendError(res, 401, ERROR_CODES.NO_TOKEN, 'No token')
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid token' });
+      return sendError(res, 401, ERROR_CODES.INVALID_TOKEN, 'Invalid token')
     }
 
     res.json({ email: user.email, plan: user.plan, trialEndsAt: user.trialEndsAt, subscriptionId: user.subscriptionId });
   } catch (error) {
-    res.status(401).json({ error: 'Invalid or expired token' });
+    return sendError(res, 401, ERROR_CODES.INVALID_TOKEN, 'Invalid or expired token')
   }
 }
 

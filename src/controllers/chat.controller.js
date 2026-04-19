@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma')
+const { sendError, ERROR_CODES } = require('../utils/errors')
 
 async function getChats(req, res) {
     const userId = req.user.userId
@@ -6,13 +7,12 @@ async function getChats(req, res) {
     try {
         const chats = await prisma.chat.findMany({
             where: { userId },
-            include: {
-                folder: true
-            },
+            include: { folder: true },
         })
         res.json(chats)
     } catch (error) {
-        res.status(500).json({ error: 'Error fetching chats' })
+        console.error('getChats error:', error.message)
+        return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Error fetching chats')
     }
 }
 
@@ -30,14 +30,13 @@ async function createChat(req, res) {
                 archived,
                 folderId,
             },
-            include: {
-                folder: true,
-            },
+            include: { folder: true },
         })
 
         res.status(201).json(chat)
     } catch (error) {
-        res.status(500).json({ error: 'Error creating chat' })
+        console.error('createChat error:', error.message)
+        return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Error creating chat')
     }
 }
 
@@ -48,7 +47,9 @@ async function updateChat(req, res) {
 
     try {
         const chat = await prisma.chat.findUnique({ where: { id } })
-        if (!chat || chat.userId !== userId) return res.status(403).json({ error: 'Unauthorized' })
+        if (!chat || chat.userId !== userId) {
+            return sendError(res, 403, ERROR_CODES.ACCESS_DENIED, 'Unauthorized')
+        }
 
         const updated = await prisma.chat.update({
             where: { id },
@@ -56,9 +57,9 @@ async function updateChat(req, res) {
         })
         res.json(updated)
     } catch (error) {
-        res.status(500).json({ error: 'Error updating chat' })
+        console.error('updateChat error:', error.message)
+        return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Error updating chat')
     }
-
 }
 
 async function deleteChat(req, res) {
@@ -67,12 +68,15 @@ async function deleteChat(req, res) {
 
     try {
         const chat = await prisma.chat.findUnique({ where: { id } })
-        if (!chat || chat.userId !== userId) return res.status(403).json({ error: 'Unauthorized' })
+        if (!chat || chat.userId !== userId) {
+            return sendError(res, 403, ERROR_CODES.ACCESS_DENIED, 'Unauthorized')
+        }
 
         await prisma.chat.delete({ where: { id } })
         res.json({ message: 'Chat deleted' })
     } catch (error) {
-        return res.status(500).json({ error: 'Error deleting chat' })
+        console.error('deleteChat error:', error.message)
+        return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Error deleting chat')
     }
 }
 

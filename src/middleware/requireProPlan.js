@@ -1,10 +1,11 @@
 const prisma = require('../lib/prisma');
+const { sendError, ERROR_CODES } = require('../utils/errors')
 
 async function requireProPlan(req, res, next) {
   const userId = req.user?.userId;
 
   if (!userId) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return sendError(res, 401, ERROR_CODES.UNAUTHORIZED, 'Unauthorized')
   }
 
   try {
@@ -12,16 +13,17 @@ async function requireProPlan(req, res, next) {
     const now = new Date();
 
     if (!user) {
-      return res.status(403).json({ error: 'No user found' });
+      return sendError(res, 403, ERROR_CODES.ACCESS_DENIED, 'No user found')
     }
 
     if (user.plan === 'free' && user.trialEndsAt && new Date(user.trialEndsAt) < now) {
-      return res.status(403).json({ error: 'Upgrade required' });
+      return sendError(res, 403, ERROR_CODES.UPGRADE_REQUIRED, 'Upgrade required')
     }
 
     next();
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('requireProPlan error:', err.message)
+    return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Server error')
   }
 }
 

@@ -1,0 +1,60 @@
+services:
+
+  # ── Base de datos PostgreSQL ─────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gptorganizer
+      POSTGRES_PASSWORD: gptorganizer
+      POSTGRES_DB: gptorganizer
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gptorganizer -d gptorganizer"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Migraciones ──────────────────────────────────────────────────────────────
+  migrate:
+    build: .
+    command: npx prisma migrate deploy
+    environment:
+      DATABASE_URL: postgresql://gptorganizer:gptorganizer@db:5432/gptorganizer
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # ── API ──────────────────────────────────────────────────────────────────────
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-4000}:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://gptorganizer:gptorganizer@db:5432/gptorganizer
+
+      JWT_SECRET: ${JWT_SECRET}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_PRICE_ID: ${STRIPE_PRICE_ID}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+    volumes:
+      - ./src:/app/src
+    command: npx nodemon src/server.js
+
+volumes:
+  postgres_data:

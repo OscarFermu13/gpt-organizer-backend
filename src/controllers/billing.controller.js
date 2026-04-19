@@ -1,28 +1,25 @@
 const prisma = require('../lib/prisma');
 const { createCheckoutSession, createCustomerPortalSession, getCustomerByEmail } = require('../services/stripe.service');
+const { sendError, ERROR_CODES } = require('../utils/errors')
 
 async function startCheckout(req, res) {
   try {
     const userId = req.user.userId;
-    
-    // Obtener datos completos del usuario
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-    
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return sendError(res, 404, ERROR_CODES.NOT_FOUND, 'User not found')
     }
 
-    // Verificar si ya tiene una suscripción activa
     if (user.plan === 'pro') {
-      return res.status(400).json({ error: 'User already has an active subscription' });
+      return sendError(res, 400, ERROR_CODES.ALREADY_SUBSCRIBED, 'User already has an active subscription')
     }
 
     const url = await createCheckoutSession(user.email, userId);
     res.json({ url });
   } catch (err) {
-    res.status(500).json({ error: 'Could not create checkout session' });
+    console.error('startCheckout error:', err.message)
+    return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Could not create checkout session')
   }
 }
 
@@ -31,14 +28,16 @@ async function startCustomerPortal(req, res) {
     const userId = req.user.userId;
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      return sendError(res, 404, ERROR_CODES.NOT_FOUND, 'User not found')
+    }
 
     let stripeCustomerId = user.stripeCustomerId;
 
     if (!stripeCustomerId) {
       const customer = await getCustomerByEmail(user.email);
       if (!customer) {
-        return res.status(400).json({ error: 'No Stripe customer found. Please complete a purchase first.' });
+        return sendError(res, 400, ERROR_CODES.NO_STRIPE_CUSTOMER, 'No Stripe customer found. Please complete a purchase first.')
       }
 
       stripeCustomerId = customer.id;
@@ -51,14 +50,15 @@ async function startCustomerPortal(req, res) {
     const url = await createCustomerPortalSession(stripeCustomerId);
     res.json({ url });
   } catch (err) {
-    res.status(500).json({ error: 'Could not create portal session' });
+    console.error('startCustomerPortal error:', err.message)
+    return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Could not create portal session')
   }
 }
 
 async function getSubscriptionStatus(req, res) {
   try {
     const userId = req.user.userId;
-    
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -70,7 +70,7 @@ async function getSubscriptionStatus(req, res) {
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return sendError(res, 404, ERROR_CODES.NOT_FOUND, 'User not found')
     }
 
     res.json({
@@ -80,7 +80,8 @@ async function getSubscriptionStatus(req, res) {
       hasActiveSubscription: user.plan === 'pro'
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not get subscription status' });
+    console.error('getSubscriptionStatus error:', err.message)
+    return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Could not get subscription status')
   }
 }
 
