@@ -152,17 +152,10 @@ async function deleteUser(req, res) {
 }
 
 async function validateUser(req, res) {
-  const token = req.cookies.token
-
-  if (!token) {
-    return sendError(res, 401, ERROR_CODES.NO_TOKEN, 'No token')
-  }
-
   try {
-    const decoded = jwt.verify(token, JWT_SECRET)
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId } })
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } })
     if (!user) {
-      return sendError(res, 401, ERROR_CODES.INVALID_TOKEN, 'Invalid token')
+      return sendError(res, 404, ERROR_CODES.NOT_FOUND, 'User not found')
     }
 
     res.json({
@@ -172,7 +165,8 @@ async function validateUser(req, res) {
       subscriptionId: user.subscriptionId,
     })
   } catch (error) {
-    return sendError(res, 401, ERROR_CODES.INVALID_TOKEN, 'Invalid or expired token')
+    console.error('validateUser error:', error.message)
+    return sendError(res, 500, ERROR_CODES.INTERNAL_ERROR, 'Internal server error')
   }
 }
 

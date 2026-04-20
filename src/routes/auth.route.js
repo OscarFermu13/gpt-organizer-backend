@@ -8,6 +8,6 @@ router.post('/login', login)
 router.post('/logout', logout)
 router.put('/change-password', auth, changePassword)
 router.delete('/delete-user', auth, deleteUser)
-router.get('/validate', validateUser)
+router.get('/validate', auth, validateUser)
 
 module.exports = router

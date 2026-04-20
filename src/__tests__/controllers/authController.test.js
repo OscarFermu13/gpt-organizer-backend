@@ -14,6 +14,7 @@ const {
     changePassword,
     deleteUser,
 } = require('../../controllers/auth.controller');
+
 const {
     makeUser,
     makeProUser,
@@ -25,7 +26,7 @@ function makeApp() {
         app.post('/auth/register', register);
         app.post('/auth/login', login);
         app.post('/auth/logout', logout);
-        app.get('/auth/validate', validateUser);
+        app.get('/auth/validate', authenticateToken, validateUser);
         app.put('/auth/change-password', authenticateToken, changePassword);
         app.delete('/auth/delete-user', authenticateToken, deleteUser);
     });
@@ -173,23 +174,33 @@ describe('POST /auth/logout', () => {
 describe('GET /auth/validate', () => {
     const app = makeApp();
 
-    it('devuelve 401 si no hay cookie', async () => {
+    it('devuelve 401 con code NO_TOKEN si no hay cookie', async () => {
         const res = await request(app).get('/auth/validate');
         expect(res.status).toBe(401);
+        expect(res.body.code).toBe('NO_TOKEN');
     });
 
-    it('devuelve 401 si el usuario del token no existe', async () => {
+    it('devuelve 403 con code INVALID_TOKEN si el token es inválido', async () => {
+        const res = await request(app)
+            .get('/auth/validate')
+            .set('Cookie', 'token=malformed.token.here');
+        expect(res.status).toBe(403);
+        expect(res.body.code).toBe('INVALID_TOKEN');
+    });
+
+    it('devuelve 404 si el usuario del token no existe en BD', async () => {
         const user = makeUser();
-        prismaMock.user.findUnique.mockResolvedValue(null);
+        prismaMock.user.findUnique.mockResolvedValueOnce(null);
         const res = await request(app)
             .get('/auth/validate')
             .set('Cookie', makeAuthCookie(user));
-        expect(res.status).toBe(401);
+        expect(res.status).toBe(404);
+        expect(res.body.code).toBe('NOT_FOUND');
     });
 
     it('devuelve 200 con datos del usuario si el token es válido', async () => {
         const user = makeUser();
-        prismaMock.user.findUnique.mockResolvedValue(user);
+        prismaMock.user.findUnique.mockResolvedValueOnce(user);
         const res = await request(app)
             .get('/auth/validate')
             .set('Cookie', makeAuthCookie(user));
@@ -200,7 +211,7 @@ describe('GET /auth/validate', () => {
 
     it('no expone la contraseña en la respuesta', async () => {
         const user = makeUser();
-        prismaMock.user.findUnique.mockResolvedValue(user);
+        prismaMock.user.findUnique.mockResolvedValueOnce(user);
         const res = await request(app)
             .get('/auth/validate')
             .set('Cookie', makeAuthCookie(user));
