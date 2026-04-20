@@ -3,14 +3,13 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const { sendError, ERROR_CODES } = require('../utils/errors')
 const { isValidEmail, isValidPassword } = require('../utils/validate')
-
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
+const { JWT_SECRET, IS_PRODUCTION } = require('../config')
 
 const cookieOptions = {
   httpOnly: true,
-  secure: true,
-  sameSite: 'None',
-  maxAge: 7 * 24 * 60 * 60 * 1000
+  secure: IS_PRODUCTION,
+  sameSite: IS_PRODUCTION ? 'None' : 'Lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 async function register(req, res) {
@@ -40,7 +39,7 @@ async function register(req, res) {
         email: email.trim().toLowerCase(),
         password: hashedPassword,
         plan: 'free',
-        trialEndsAt
+        trialEndsAt,
       },
     })
 
@@ -84,7 +83,11 @@ async function login(req, res) {
 }
 
 async function logout(req, res) {
-  res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'None' })
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: IS_PRODUCTION,
+    sameSite: IS_PRODUCTION ? 'None' : 'Lax',
+  })
   res.status(200).json({ message: 'Logged out successfully' })
 }
 
@@ -136,7 +139,11 @@ async function deleteUser(req, res) {
       prisma.user.delete({ where: { id: user.id } }),
     ])
 
-    res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'None' })
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: IS_PRODUCTION,
+      sameSite: IS_PRODUCTION ? 'None' : 'Lax',
+    })
     res.status(200).json({ message: 'User deleted successfully' })
   } catch (error) {
     console.error('deleteUser error:', error.message)

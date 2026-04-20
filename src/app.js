@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const rateLimit = require('express-rate-limit')
-const dotenv = require('dotenv')
+const { FRONTEND_URL } = require('./config')
 
 const authRoutes = require('./routes/auth.route')
 const chatRoutes = require('./routes/chat.route')
@@ -11,10 +11,8 @@ const billingRoute = require('./routes/billing.route')
 const webhookRoute = require('./routes/webhook.route')
 const messageRoute = require('./routes/message.route')
 
-dotenv.config()
-
 const app = express()
-
+ 
 app.use(cors({
   origin: [
     'chrome-extension://coamoeeenfhnihibejoohkhcplckkjpm',
@@ -25,6 +23,7 @@ app.use(cors({
     'https://gpt-organizer-landing.vercel.app',
     'https://gptorganizersuite.com',
     'https://www.gptorganizersuite.com',
+    FRONTEND_URL,
   ],
   credentials: true,
 }))

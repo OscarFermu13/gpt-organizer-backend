@@ -1,13 +1,14 @@
 const stripe = require('../lib/stripe');
 const prisma = require('../lib/prisma');
 const { sendError, ERROR_CODES } = require('../utils/errors')
+const { STRIPE_WEBHOOK_SECRET } = require('../config')
 
 async function handleStripeWebhook(req, res) {
   const sig = req.headers['stripe-signature'];
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
@@ -17,27 +18,21 @@ async function handleStripeWebhook(req, res) {
       case 'checkout.session.completed':
         await handleCheckoutCompleted(event.data.object);
         break;
-
       case 'customer.subscription.created':
         await handleSubscriptionCreated(event.data.object);
         break;
-
       case 'customer.subscription.updated':
         await handleSubscriptionUpdated(event.data.object);
         break;
-
       case 'customer.subscription.deleted':
         await handleSubscriptionDeleted(event.data.object);
         break;
-
       case 'invoice.payment_succeeded':
         await handlePaymentSucceeded(event.data.object);
         break;
-
       case 'invoice.payment_failed':
         await handlePaymentFailed(event.data.object);
         break;
-
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
@@ -69,10 +64,7 @@ async function handleCheckoutCompleted(session) {
 
     await prisma.user.update({
       where: { id: user.id },
-      data: {
-        stripeCustomerId: customerId,
-        plan: 'pro'
-      }
+      data: { stripeCustomerId: customerId, plan: 'pro' },
     });
   } catch (error) {
     console.error('handleCheckoutCompleted error:', error.message)
@@ -84,10 +76,7 @@ async function handleSubscriptionCreated(subscription) {
   try {
     await prisma.user.updateMany({
       where: { stripeCustomerId: subscription.customer },
-      data: {
-        plan: 'pro',
-        subscriptionId: subscription.id
-      }
+      data: { plan: 'pro', subscriptionId: subscription.id },
     });
   } catch (error) {
     console.error('handleSubscriptionCreated error:', error.message)
@@ -98,13 +87,9 @@ async function handleSubscriptionCreated(subscription) {
 async function handleSubscriptionUpdated(subscription) {
   try {
     const plan = subscription.status === 'active' ? 'pro' : 'free';
-
     await prisma.user.updateMany({
       where: { stripeCustomerId: subscription.customer },
-      data: {
-        plan: plan,
-        subscriptionId: subscription.id
-      }
+      data: { plan, subscriptionId: subscription.id },
     });
   } catch (error) {
     console.error('handleSubscriptionUpdated error:', error.message)
@@ -116,10 +101,7 @@ async function handleSubscriptionDeleted(subscription) {
   try {
     await prisma.user.updateMany({
       where: { stripeCustomerId: subscription.customer },
-      data: {
-        plan: 'free',
-        subscriptionId: null
-      }
+      data: { plan: 'free', subscriptionId: null },
     });
   } catch (error) {
     console.error('handleSubscriptionDeleted error:', error.message)
@@ -137,6 +119,4 @@ async function handlePaymentFailed(invoice) {
   console.warn('Payment failed for customer:', invoice.customer)
 }
 
-module.exports = {
-  handleStripeWebhook
-};
+module.exports = { handleStripeWebhook };

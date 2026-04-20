@@ -1,5 +1,8 @@
 const Stripe = require('stripe');
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2022-11-15'
+const { STRIPE_SECRET_KEY } = require('../config');
+
+const stripe = new Stripe(STRIPE_SECRET_KEY, {
+  apiVersion: '2025-04-30',
 });
+
 module.exports = stripe;

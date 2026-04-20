@@ -1,12 +1,9 @@
 const stripe = require('../lib/stripe');
+const { STRIPE_PRICE_ID, FRONTEND_URL } = require('../config');
 
 async function createCheckoutSession(userEmail, userId) {
   try {
-    // Verificar si ya existe un cliente con este email
-    const existingCustomers = await stripe.customers.list({
-      email: userEmail,
-      limit: 1
-    });
+    const existingCustomers = await stripe.customers.list({ email: userEmail, limit: 1 });
 
     let customerId;
     if (existingCustomers.data.length > 0) {
@@ -16,18 +13,12 @@ async function createCheckoutSession(userEmail, userId) {
     const sessionConfig = {
       payment_method_types: ['card'],
       mode: 'subscription',
-      line_items: [{
-        price: process.env.STRIPE_PRICE_ID,
-        quantity: 1,
-      }],
-      success_url: `${process.env.FRONTEND_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL}/`,
-      metadata: {
-        userId: userId // Agregar userId en metadata para el webhook
-      }
+      line_items: [{ price: STRIPE_PRICE_ID, quantity: 1 }],
+      success_url: `${FRONTEND_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${FRONTEND_URL}/`,
+      metadata: { userId },
     };
 
-    // Si existe un cliente, usarlo; si no, Stripe creará uno nuevo
     if (customerId) {
       sessionConfig.customer = customerId;
     } else {
@@ -35,7 +26,6 @@ async function createCheckoutSession(userEmail, userId) {
     }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
-
     return session.url;
   } catch (error) {
     throw error;
@@ -46,9 +36,8 @@ async function createCustomerPortalSession(customerId) {
   try {
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${process.env.FRONTEND_URL}/dashboard`
+      return_url: `${FRONTEND_URL}/dashboard`,
     });
-
     return portalSession.url;
   } catch (error) {
     throw error;
@@ -57,16 +46,8 @@ async function createCustomerPortalSession(customerId) {
 
 async function getCustomerByEmail(email) {
   try {
-    const customers = await stripe.customers.list({
-      email: email,
-      limit: 1
-    });
-
-    if (customers.data.length > 0) {
-      return customers.data[0];
-    }
-
-    return null;
+    const customers = await stripe.customers.list({ email, limit: 1 });
+    return customers.data.length > 0 ? customers.data[0] : null;
   } catch (error) {
     throw error;
   }
@@ -74,8 +55,7 @@ async function getCustomerByEmail(email) {
 
 async function getSubscription(subscriptionId) {
   try {
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-    return subscription;
+    return await stripe.subscriptions.retrieve(subscriptionId);
   } catch (error) {
     throw error;
   }
@@ -85,5 +65,5 @@ module.exports = {
   createCheckoutSession,
   createCustomerPortalSession,
   getCustomerByEmail,
-  getSubscription
+  getSubscription,
 };

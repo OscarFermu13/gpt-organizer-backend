@@ -110,12 +110,23 @@ async function deleteFolder(req, res) {
 
     const allFolderIds = [folder.id, ...(await getAllSubfolderIds(folder.id))]
 
+    const chatIds = await prisma.chat.findMany({
+      where: { folderId: { in: allFolderIds } },
+      select: { chatId: true },
+    }).then((chats) => chats.map((c) => c.chatId))
+
+    if (chatIds.length > 0) {
+      await prisma.starredMessage.deleteMany({
+        where: { chatId: { in: chatIds } },
+      })
+    }
+
     await prisma.chat.deleteMany({
-      where: { folderId: { in: allFolderIds } }
+      where: { folderId: { in: allFolderIds } },
     })
 
     await prisma.folder.deleteMany({
-      where: { id: { in: allFolderIds } }
+      where: { id: { in: allFolderIds } },
     })
 
     res.json({ message: 'Folder and related content deleted' })
