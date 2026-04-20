@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma')
 const { sendError, ERROR_CODES } = require('../utils/errors')
+const { isValidId, isValidString, isValidChatId } = require('../utils/validate')
 
 async function getChats(req, res) {
     const userId = req.user.userId
@@ -20,15 +21,25 @@ async function createChat(req, res) {
     const { chatId, title, favorite, archived, folderId } = req.body
     const userId = req.user.userId
 
+    if (!isValidChatId(chatId)) {
+        return sendError(res, 400, ERROR_CODES.INVALID_PAYLOAD, 'Invalid or missing chatId')
+    }
+    if (!isValidString(title, { maxLength: 500 })) {
+        return sendError(res, 400, ERROR_CODES.INVALID_PAYLOAD, 'Invalid or missing title')
+    }
+    if (folderId !== undefined && folderId !== null && !isValidId(folderId)) {
+        return sendError(res, 400, ERROR_CODES.INVALID_PAYLOAD, 'Invalid folderId format')
+    }
+
     try {
         const chat = await prisma.chat.create({
             data: {
                 userId,
                 chatId,
                 title,
-                favorite,
-                archived,
-                folderId,
+                favorite: Boolean(favorite),
+                archived: Boolean(archived),
+                folderId: folderId ?? null,
             },
             include: { folder: true },
         })
@@ -44,6 +55,16 @@ async function updateChat(req, res) {
     const { id } = req.params
     const { title, folderId } = req.body
     const userId = req.user.userId
+
+    if (!isValidId(id)) {
+        return sendError(res, 400, ERROR_CODES.INVALID_PAYLOAD, 'Invalid chat ID format')
+    }
+    if (title !== undefined && !isValidString(title, { maxLength: 500 })) {
+        return sendError(res, 400, ERROR_CODES.INVALID_PAYLOAD, 'Invalid title')
+    }
+    if (folderId !== undefined && folderId !== null && !isValidId(folderId)) {
+        return sendError(res, 400, ERROR_CODES.INVALID_PAYLOAD, 'Invalid folderId format')
+    }
 
     try {
         const chat = await prisma.chat.findUnique({ where: { id } })
@@ -65,6 +86,10 @@ async function updateChat(req, res) {
 async function deleteChat(req, res) {
     const { id } = req.params
     const userId = req.user.userId
+
+    if (!isValidId(id)) {
+        return sendError(res, 400, ERROR_CODES.INVALID_PAYLOAD, 'Invalid chat ID format')
+    }
 
     try {
         const chat = await prisma.chat.findUnique({ where: { id } })
